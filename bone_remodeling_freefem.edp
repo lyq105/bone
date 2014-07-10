@@ -1,0 +1,43 @@
+
+
+//Define the mesh
+
+mesh Th=square(80,80,[x,y]);
+plot(Th);
+real E=1.0e6,nu=0.3;
+//
+macro strain(u,v)[dx(u),dy(v),dy(u)+dx(v)]//
+//
+macro C(E,nu)
+ [[E/(1-nu^2),E*nu/(1-nu^2),0],
+  [E*nu/(1-nu^2),E/(1-nu^2),0],
+  [0,0,E/(2*(1+nu))]]//
+
+fespace Vh(Th,P1);
+Vh u,v,uu,vv;
+func g2=-100;
+problem elasticity([u,v],[uu,vv])=int2d(Th)(strain(u,v)'*C(E,nu)*strain(uu,vv))-int1d(Th,2)(g2*vv)+on(4,u=0,v=0);
+
+elasticity;
+
+plot(u,ps="h.eps");
+
+//
+//ε x , ε y , γ xy
+//Vh ex = dx ( u ) ;
+//Vh ey = dy ( v ) ;
+//Vh exy = dx ( v ) + dy ( u ) ;
+//
+//σ x , σ y , τ xy
+//Vh Tx = E /(1 - nu ^2) *( ex + nu * ey ) ;
+//Vh Ty = E /(1 - nu ^2) *( ex * nu + ey ) ;
+//Vh Txy = E / ( 2 * ( 1 + nu ) ) * exy ;
+
+//Vh sed=ex*Tx+ey*Ty+exy*Txy;
+
+Vh sed2 = 0.5*strain(u,v)'*C(E,nu)*strain(u,v);
+
+/*plot(sed);*/
+plot(sed2);
+
+Vh rho;
