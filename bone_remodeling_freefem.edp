@@ -1,26 +1,44 @@
 
+// Define parameters
 
-//Define the mesh
+real B = 1.0;
+real C = 100;
+real ka = 0.25e3;
+real gamma = 2;
+real rhoinit = 0.8e3;
+real rho0 = 0.01e3;
+real rhocb = 1.74e3;
+real possionratio = 0.3;
+real ediv = 40;
+real squarelenth = 0.1;
+real toppres = 1e7;
 
-mesh Th=square(80,80,[x,y]);
+//Define the mesh and finite element space
+
+mesh Th=square(ediv,ediv,[squarelenth*x,squarelenth*y]);
 plot(Th);
-real E=1.0e6,nu=0.3;
-//
+fespace Vh(Th,P1);
+Vh u,v,uu,vv;
+Vh E = 1e7;   // Young's Modulus is in P1 finite elemnt space;
+Vh rho = rhoinit; // Bone's density function is also in P1 finite element space;
+
+// define some macros 
 macro strain(u,v)[dx(u),dy(v),dy(u)+dx(v)]//
-//
 macro C(E,nu)
  [[E/(1-nu^2),E*nu/(1-nu^2),0],
   [E*nu/(1-nu^2),E/(1-nu^2),0],
   [0,0,E/(2*(1+nu))]]//
 
-fespace Vh(Th,P1);
-Vh u,v,uu,vv;
-func g2=-100;
-problem elasticity([u,v],[uu,vv])=int2d(Th)(strain(u,v)'*C(E,nu)*strain(uu,vv))-int1d(Th,2)(g2*vv)+on(4,u=0,v=0);
+func top=-toppres/squarelenth*x*y + toppres;
+//func top= x + y;
+Vh g2 =top;
+problem elasticity([u,v],[uu,vv])=int2d(Th)(strain(u,v)'*C(E,possionratio)*strain(uu,vv))-int1d(Th,3)(g2*vv)+on(1,u=0,v=0);
 
 elasticity;
 
-plot(u,ps="h.eps");
+plot(g2,ps="bc.eps");
+plot(u,ps="u.ps");
+//plot([u,v],ps="uv.ps");
 
 //
 //ε x , ε y , γ xy
@@ -35,9 +53,8 @@ plot(u,ps="h.eps");
 
 //Vh sed=ex*Tx+ey*Ty+exy*Txy;
 
-Vh sed2 = 0.5*strain(u,v)'*C(E,nu)*strain(u,v);
+Vh sed2 = 0.5*strain(u,v)'*C(E,possionratio)*strain(u,v);
 
 /*plot(sed);*/
 plot(sed2);
 
-Vh rho;
