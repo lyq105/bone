@@ -9,7 +9,7 @@ real rhoinit = 0.8e3;
 real rho0 = 0.01e3;
 real rhocb = 1.74e3;
 real possionratio = 0.3;
-real ediv = 80;
+real ediv = 40;
 real squarelenth = 0.1;
 real toppres = 1e7;
 
@@ -25,12 +25,16 @@ Wh E = C*rho^gamma;   // Young's Modulus is in P0 finite elemnt space;
 
 // define some macros 
 macro strain(u,v)[dx(u),dy(v),dy(u)+dx(v)]//
+//macro D(E,nu)
+ //[[E/(1-nu^2),E*nu/(1-nu^2),0],
+  //[E*nu/(1-nu^2),E/(1-nu^2),0],
+  //[0,0,E/(2*(1+nu))]]// Plane stress elastic matrix
 macro D(E,nu)
- [[E/(1-nu^2),E*nu/(1-nu^2),0],
-  [E*nu/(1-nu^2),E/(1-nu^2),0],
-  [0,0,E/(2*(1+nu))]]// Plane stress elastic matrix
+ [[E*(1-nu)/((1-nu)*(1-2*nu)),E*nu/((1-nu)*(1-2*nu)),0],
+  [E*nu/((1-nu)*(1-2*nu)),E*(1-nu)/((1-nu)*(1-2*nu)),0],
+  [0,0,E/(2*(1+nu))]]// Plane strain elastic matrix
 
-func top=-toppres/squarelenth*x*y + toppres;
+func top=-toppres/squarelenth*x*(1+y)/(1+y) + toppres;
 //func top= x + y;
 Vh g2 =top;
 problem elasticity([u,v],[uu,vv])=int2d(Th)(strain(u,v)'*D(E,possionratio)*strain(uu,vv))-int1d(Th,3)(g2*vv)+on(1,u=0,v=0);
@@ -39,7 +43,7 @@ ofstream ff("objvalue.dat");
 for (int t = 0; t<200;t++)
 {
 	elasticity;
-	Wh sed = 0.5*strain(u,v)'*D(E,possionratio)*strain(u,v);
+	Wh sed = strain(u,v)'*D(E,possionratio)*strain(u,v);
 	rho = rho + B*(sed/rho -ka);
 	cout <<"max & min is "<< rho[].max << "&" << rho[].min<<endl;
 	for (int ri=0;ri<rho.n;ri++)
