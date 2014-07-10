@@ -9,7 +9,7 @@ real rhoinit = 0.8e3;
 real rho0 = 0.01e3;
 real rhocb = 1.74e3;
 real possionratio = 0.3;
-real ediv = 40;
+real ediv = 80;
 real squarelenth = 0.1;
 real toppres = 1e7;
 
@@ -17,44 +17,40 @@ real toppres = 1e7;
 
 mesh Th=square(ediv,ediv,[squarelenth*x,squarelenth*y]);
 plot(Th);
-fespace Vh(Th,P1);
+fespace Vh(Th,P2);
+fespace Wh(Th,P0);
 Vh u,v,uu,vv;
-Vh E = 1e7;   // Young's Modulus is in P1 finite elemnt space;
-Vh rho = rhoinit; // Bone's density function is also in P1 finite element space;
+Wh rho = rhoinit; // Bone's density function is in P0 finite element space;
+Wh E = C*rho^gamma;   // Young's Modulus is in P0 finite elemnt space;
 
 // define some macros 
 macro strain(u,v)[dx(u),dy(v),dy(u)+dx(v)]//
-macro C(E,nu)
+macro D(E,nu)
  [[E/(1-nu^2),E*nu/(1-nu^2),0],
   [E*nu/(1-nu^2),E/(1-nu^2),0],
-  [0,0,E/(2*(1+nu))]]//
+  [0,0,E/(2*(1+nu))]]// Plane stress elastic matrix
 
 func top=-toppres/squarelenth*x*y + toppres;
 //func top= x + y;
 Vh g2 =top;
-problem elasticity([u,v],[uu,vv])=int2d(Th)(strain(u,v)'*C(E,possionratio)*strain(uu,vv))-int1d(Th,3)(g2*vv)+on(1,u=0,v=0);
+problem elasticity([u,v],[uu,vv])=int2d(Th)(strain(u,v)'*D(E,possionratio)*strain(uu,vv))-int1d(Th,3)(g2*vv)+on(1,u=0,v=0);
 
-elasticity;
+ofstream ff("objvalue.dat");
+for (int t = 0; t<200;t++)
+{
+	elasticity;
+	Wh sed = 0.5*strain(u,v)'*D(E,possionratio)*strain(u,v);
+	rho = rho + B*(sed/rho -ka);
+	cout <<"max & min is "<< rho[].max << "&" << rho[].min<<endl;
+	for (int ri=0;ri<rho.n;ri++)
+	{
+		if (rho[](ri)>=rhocb) rho[](ri)=rhocb;
+		if (rho[](ri)<=rho0) rho[](ri)=rho0;
+	}
+	E = C*rho^gamma;
+	Wh obj = abs(sed/rho-ka);
+	ff <<t<<" " << obj[].sum/obj.n << endl;
+}
 
-plot(g2,ps="bc.eps");
-plot(u,ps="u.ps");
-//plot([u,v],ps="uv.ps");
-
-//
-//ε x , ε y , γ xy
-//Vh ex = dx ( u ) ;
-//Vh ey = dy ( v ) ;
-//Vh exy = dx ( v ) + dy ( u ) ;
-//
-//σ x , σ y , τ xy
-//Vh Tx = E /(1 - nu ^2) *( ex + nu * ey ) ;
-//Vh Ty = E /(1 - nu ^2) *( ex * nu + ey ) ;
-//Vh Txy = E / ( 2 * ( 1 + nu ) ) * exy ;
-
-//Vh sed=ex*Tx+ey*Ty+exy*Txy;
-
-Vh sed2 = 0.5*strain(u,v)'*C(E,possionratio)*strain(u,v);
-
-/*plot(sed);*/
-plot(sed2);
+plot(rho,fill=1,ps="rho.eps");
 
