@@ -1,4 +1,4 @@
-
+load "iovtk"
 // Define parameters
 
 real B = 1.0;
@@ -37,10 +37,10 @@ macro D(E,nu)
 func top=-toppres/squarelenth*x*(1+y)/(1+y) + toppres;
 //func top= x + y;
 Vh g2 =top;
-problem elasticity([u,v],[uu,vv])=int2d(Th)(strain(u,v)'*D(E,possionratio)*strain(uu,vv))-int1d(Th,3)(g2*vv)+on(1,u=0,v=0);
+problem elasticity([u,v],[uu,vv])=int2d(Th)(strain(u,v)'*D(E,possionratio)*strain(uu,vv))+int1d(Th,3)(g2*vv)+on(1,u=0,v=0);
 
 ofstream ff("objvalue.dat");
-for (int t = 0; t<200;t++)
+for (int t = 0; t<40;t++)
 {
 	elasticity;
 	Wh sed = strain(u,v)'*D(E,possionratio)*strain(u,v);
@@ -57,4 +57,37 @@ for (int t = 0; t<200;t++)
 }
 
 plot(rho,fill=1,ps="rho.eps");
+savevtk("rho.vtk",Th,rho,dataname="rho");
 
+ofstream tec("rho.plt");
+
+tec << "TITLE = \"Bone density\""   << endl;
+tec << "VARIABLES = \"X\", \"Y\", \"rho\"" << endl;
+tec << "ZONE ZONETYPE = FETRIANGLE"
+    << ",NODES = "<< Th.nv 
+    << ",ELEMENTS = "<< Th.nt
+    << ",DATAPACKING = BLOCK"
+    << ",VARLOCATION = ([3]=CELLCENTERED)" << endl;
+
+for (int i = 0;i< Th.nv;i++)
+{
+	tec << Th(i).x << "  ";
+}
+tec << endl;
+for (int i = 0;i< Th.nv;i++)
+{
+	tec << Th(i).y << "  ";
+}
+tec << endl;
+for (int i = 0;i< Th.nt;i++)
+{
+	tec << rho[][i] << "  ";
+}
+
+for (int i = 0; i < Th.nt; i++)
+{
+	tec << Th[i][0] + 1<< " "
+		  << Th[i][1] + 1<< " "
+      << Th[i][2] + 1<< endl;
+}
+cout << rho[].n <<endl;
