@@ -9,7 +9,7 @@ real rhoinit = 0.8e3;
 real rho0 = 0.01e3;
 real rhocb = 1.74e3;
 real possionratio = 0.3;
-real ediv = 40;
+real ediv = 80;
 real squarelenth = 0.1;
 real toppres = 1e7;
 
@@ -42,17 +42,22 @@ ofstream ff("objvalue.dat");
 for (int t = 0; t<100;t++)
 {
 	elasticity;
-	Wh sed = strain(u,v)'*D(E,possionratio)*strain(u,v);
+	Wh sed = 0.5*strain(u,v)'*D(E,possionratio)*strain(u,v);
 	rho = rho + B*(sed/rho -ka);
 	cout <<"max & min is "<< rho[].max << "&" << rho[].min<<endl;
+	Wh obj2=0;
 	for (int ri=0;ri<rho.n;ri++)
 	{
 		if (rho[](ri)>=rhocb) rho[](ri)=rhocb;
 		if (rho[](ri)<=rho0) rho[](ri)=rho0;
+		if (rho[](ri)<rhocb && rho[](ri)>rho0) obj2[](ri)=abs(sed[](ri)/rho[](ri)-ka);
 	}
 	E = C*rho^gamma;
 	Wh obj = abs(sed/rho-ka);
-	ff <<t<<" " << obj[].sum/obj.n << endl;
+	ff << t <<" " 
+		 //<< obj[].sum/obj.n << " "
+		 << obj2[].sum/obj2.n 
+	   << endl;
 }
 
 //mesh th;
