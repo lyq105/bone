@@ -25,14 +25,14 @@ Wh E = C*rho^gamma;   // Young's Modulus is in P0 finite elemnt space;
 
 // define some macros 
 macro strain(u,v)[dx(u),dy(v),dy(u)+dx(v)]//
-//macro D(E,nu)
- //[[E/(1-nu^2),E*nu/(1-nu^2),0],
-  //[E*nu/(1-nu^2),E/(1-nu^2),0],
-  //[0,0,E/(2*(1+nu))]]// Plane stress elastic matrix
 macro D(E,nu)
- [[E*(1-nu)/((1-nu)*(1-2*nu)),E*nu/((1-nu)*(1-2*nu)),0],
-  [E*nu/((1-nu)*(1-2*nu)),E*(1-nu)/((1-nu)*(1-2*nu)),0],
-  [0,0,E/(2*(1+nu))]]// Plane strain elastic matrix
+ [[E/(1-nu^2),E*nu/(1-nu^2),0],
+  [E*nu/(1-nu^2),E/(1-nu^2),0],
+  [0,0,E/(2*(1+nu))]]// Plane stress elastic matrix
+//macro D(E,nu)
+// [[E*(1-nu)/((1-nu)*(1-2*nu)),E*nu/((1-nu)*(1-2*nu)),0],
+//  [E*nu/((1-nu)*(1-2*nu)),E*(1-nu)/((1-nu)*(1-2*nu)),0],
+//  [0,0,E/(2*(1+nu))]]// Plane strain elastic matrix
 
 func top=-toppres/squarelenth*x*(1+y)/(1+y) + toppres;
 Vh g2 =top;
