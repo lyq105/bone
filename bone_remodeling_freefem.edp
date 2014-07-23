@@ -12,6 +12,7 @@ real possionratio = 0.3;
 real ediv = 80;
 real squarelenth = 0.1;
 real toppres = 1e7;
+real objerror = 1e-3;
 
 //Define the mesh and finite element space
 
@@ -53,11 +54,14 @@ for (int t = 0; t<100;t++)
 		if (rho[](ri)<rhocb && rho[](ri)>rho0) obj2[](ri)=abs(sed[](ri)/rho[](ri)-ka);
 	}
 	E = C*rho^gamma;
-	Wh obj = abs(sed/rho-ka);
+	//Wh obj = abs(sed/rho-ka);
+	
 	ff << t <<" " 
 		 //<< obj[].sum/obj.n << " "
 		 << obj2[].sum/obj2.n 
 	   << endl;
+	cout << obj2[].sum/obj2.n << endl;
+	if (obj2[].sum/obj2.n < objerror) break;
 }
 
 //mesh th;
